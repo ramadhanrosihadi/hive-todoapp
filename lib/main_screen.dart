@@ -14,13 +14,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  List<Todo> todos = [];
   void addToDo(String agenda) {
     Todo newData = Todo()
       ..agenda = agenda
       ..createdAt = DateTime.now();
 
-    final box = Hive.box(Todo.boxName);
-    box.add(newData);
+    setState(() {
+      todos.add(newData);
+    });
   }
 
   Future<String?> upsertDialog(Todo? data) async {
@@ -68,10 +70,10 @@ class _MainScreenState extends State<MainScreen> {
         },
         child: Icon(Icons.add),
       ),
-      body: ValueListenableBuilder<Box<Todo>>(
-        valueListenable: Hive.box<Todo>(Todo.boxName).listenable(),
-        builder: (context, box, _) {
-          final todos = box.values.toList();
+      body: Builder(
+        builder: (
+          context,
+        ) {
           if (todos.length == 0) {
             return Center(child: Text('Kosong'));
           }
@@ -81,13 +83,16 @@ class _MainScreenState extends State<MainScreen> {
               return ItemTodo(
                 data: data,
                 onDelete: () {
-                  data.delete();
+                  setState(() {
+                    todos.remove(data);
+                  });
                 },
                 onEdit: () async {
                   String? result = await upsertDialog(data);
                   if (result != null) {
-                    data.agenda = result;
-                    data.save();
+                    setState(() {
+                      todos[index].agenda = result;
+                    });
                   }
                 },
               );
