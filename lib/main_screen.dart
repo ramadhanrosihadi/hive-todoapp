@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hive_todoapp/data/todo.dart';
 import 'package:hive_todoapp/item_todo.dart';
 
@@ -13,14 +15,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Todo> todos = [];
+
   void addToDo(String agenda) {
     Todo newData = Todo()
       ..agenda = agenda
       ..createdAt = DateTime.now();
 
-    setState(() {
-      todos.add(newData);
-    });
+    final box = Hive.box(Todo.boxName);
+    box.add(newData);
   }
 
   Future<String?> upsertDialog(Todo? data) async {
@@ -68,8 +70,9 @@ class _MainScreenState extends State<MainScreen> {
         },
         child: Icon(Icons.add),
       ),
-      body: Builder(
-        builder: (context) {
+      body: ValueListenableBuilder<Box<Todo>>(
+        valueListenable: Hive.box<Todo>(Todo.boxName).values.listenable(),
+        builder: (context, box, _) {
           if (todos.length == 0) {
             return Center(child: Text('Kosong'));
           }
